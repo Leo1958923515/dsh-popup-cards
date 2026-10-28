@@ -70,10 +70,12 @@ dsh plugin --profile desktop add link:D:\path\to\dsh-popup-cards
 | `notifyOnQuestion` | `true` | 模型提问、或提交计划待审阅时弹。 |
 | `notifyOnComplete` | `true` | 根 agent 从 `running` 落到 `idle` 时弹。 |
 | `ignoreSubagents` | `true` | 子 agent、后台委派、workflow worker 不弹。 |
-| `skipWhenDSHFocused` | `true` | DSH 窗口在前台时不弹。 |
-| `dshWindowTitleMarker` | `— DeepSeek Harness` | 窗口标题里出现这段文字就认为是 DSH（标题形如 `会话名 — DeepSeek Harness`）。 |
-| `activateDSHOnClick` | `true` | 点卡片先把 DSH 切到前台，再关卡片。 |
-| `autoCloseOnDSHFocus` | `true` | 你自己切回 DSH 时，卡片自动关。 |
+| `skipWhenDSHFocused` | `true` | 前台是 DSH（桌面端或本会话的发起客户端）时不弹。 |
+| `dshWindowTitleMarker` | `— DeepSeek Harness` | 标题兜底：窗口标题里出现这段文字也认为是 DSH。 |
+| `attributeByClient` | `true` | 记录每个会话是从哪个客户端发起的（前台进程名），该客户端在前台时静音。 |
+| `clientProcesses` | `[]` | 参与归属的客户端进程名，例如 `['Obsidian.exe']`；DSH 自己不用填。 |
+| `activateDSHOnClick` | `true` | 点卡片先把发起会话的客户端切到前台，再关卡片。 |
+| `autoCloseOnDSHFocus` | `true` | 你切回发起会话的客户端（或 DSH）时，卡片自动关。 |
 | `foregroundPollMs` | `400` | 卡片打开期间检测前台的间隔（毫秒，夹在 100–2000）。 |
 | `sound` | `false` | 弹窗时播放系统提示音。 |
 | `durationMs` | `0` | N 毫秒后自动关闭；`0` 表示常驻，点一下才关。 |
@@ -103,7 +105,7 @@ dsh plugin --profile desktop add link:D:\path\to\dsh-popup-cards
 - **失败开放**：前台判断或 Win32 助手编译失败时照常弹卡片，检测坏了也不会吞掉提醒。
 - **关掉卡片 ≠ 同意**：卡片只是提醒，审批和回答仍然要在 DSH 里完成。
 
-窗口标题用「包含匹配」是有意的：桌面端标题是 `任务名 — DeepSeek Harness`，DSH 开在浏览器标签页时会再带浏览器名，两者都能命中 `dshWindowTitleMarker`。
+前台判断以**进程名**为主、窗口标题为辅：你每发一条消息（根 agent 进入 `running`），插件记一次此刻前台窗口的进程名，和这个会话绑定；之后卡片进程先比 `DeepSeek Harness.exe`，再比这个会话的客户端进程（如 `Obsidian.exe`），命中任意一个就不弹。标题匹配只作为兜底，用于拿不到进程名的极端情况。
 
 ## 工作原理
 
@@ -113,7 +115,7 @@ dsh plugin --profile desktop add link:D:\path\to\dsh-popup-cards
 | --- | --- |
 | `approval/request`（waterfall） | 工具等待审批。用 `prepend` 注册并始终 `next()`，内置审批桥照常作答。 |
 | `tools/pre-execute`（waterfall） | `ask_user_question` → 提问；`exit_plan_mode` → 计划确认。始终 `next()`，工具照常执行。 |
-| `agent/status` | 根 agent `running → idle` → 任务完成。 |
+| `agent/status` | 根 agent `running → idle` → 任务完成；同一事件在 `running` 起点记录一次客户端归属。 |
 
 卡片第一行取会话标题（`ctx.get('sessionTitle')`），取不到退到工作目录名，再退到会话 id 前 8 位。
 
@@ -128,7 +130,7 @@ dsh plugin --profile desktop add link:D:\path\to\dsh-popup-cards
 
 - **只支持 Windows**：其它平台不弹（每次触发记一条日志）。
 - **不能替你操作**：卡片无法批准/拒绝，只能告诉你「有东西在等」。
-- **标题是启发式判断**：前台抑制与点击回 DSH 都靠窗口标题识别 DSH。改了窗口标题（自绘外壳、远程会话）就改 `dshWindowTitleMarker`，或关掉这两个开关。
+- **归属是启发式判断**：会话归属靠「发消息那一刻的前台进程」推断，只在根 agent `running` 时采样一次。你在等待期间切窗口不会改归属；但如果消息是在浏览器里从第三方转发进来的、或前台恰好是别的东西，归属会落到 DSH 或空，此时退回「DSH 前台才静音」的旧规则。窗口标题（`dshWindowTitleMarker`）只做兜底。
 - **不是通知中心**：没有历史、角标、分类样式——刻意保持「扫一眼就懂」。
 - **PowerShell 冷启动**：出一张卡要付一次 `Add-Type`/WPF 的启动成本（几百毫秒），所以卡片是串行的，密集提醒会排队而不是并发抢屏。
 

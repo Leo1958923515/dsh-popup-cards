@@ -4,6 +4,18 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.6] - 2026-10-29
+
+### Added
+
+- **Client attribution (L2)**: each session remembers the process name of the app that started it (foreground process sampled when the root agent enters `running`), so a card stays quiet while that app is in front — e.g. Obsidian driving DSH through Claudian. New config: `attributeByClient` (default `true`) and `clientProcesses` (default `[]`, e.g. `['Obsidian.exe']`).
+- Cards compare the foreground **process name** (`DeepSeek Harness.exe` or the attributed client) before the title fallback; click-to-focus targets the attributed client's window, falling back to the DSH window.
+
+### Changed
+
+- Foreground diagnostics text: `skip: client foreground exe=… title=…` and `auto-close: client foreground exe=… title=…` (was `dsh foreground title=…`).
+- `dshWindowTitleMarker` is now a fallback only; process matching takes precedence.
+
 ## [0.1.5] - 2026-10-28
 
 First release of `dsh-popup-cards`, based on

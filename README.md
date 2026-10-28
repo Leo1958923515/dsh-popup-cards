@@ -70,10 +70,12 @@ Everything is optional. Add overrides to your profile's `cordis.patch.yml` — t
 | `notifyOnQuestion` | `true` | Pop when the model asks a question or submits a plan for review. |
 | `notifyOnComplete` | `true` | Pop when a root agent goes from `running` to `idle`. |
 | `ignoreSubagents` | `true` | Stay quiet for sub-agents, background delegations and workflow workers. |
-| `skipWhenDSHFocused` | `true` | Skip the card while the DSH window is in the foreground. |
-| `dshWindowTitleMarker` | `— DeepSeek Harness` | Substring that identifies the DSH window title (`会话名 — DeepSeek Harness`). |
-| `activateDSHOnClick` | `true` | Clicking the card brings DSH to the front before closing. |
-| `autoCloseOnDSHFocus` | `true` | Close the card when you return to DSH on your own. |
+| `skipWhenDSHFocused` | `true` | Skip the card while DSH (or the client that started the session) is in the foreground. |
+| `dshWindowTitleMarker` | `— DeepSeek Harness` | Title fallback: a matching window title also counts as DSH. |
+| `attributeByClient` | `true` | Remember which client started each session (foreground process name) and stay quiet while it is in front. |
+| `clientProcesses` | `[]` | Client process names that take part in attribution, e.g. `['Obsidian.exe']`; DSH itself must not be listed. |
+| `activateDSHOnClick` | `true` | Clicking the card brings the session's client to the front before closing. |
+| `autoCloseOnDSHFocus` | `true` | Close the card when you return to the session's client (or DSH) on your own. |
 | `foregroundPollMs` | `400` | Foreground check interval while a card is open (clamped to 100–2000). |
 | `sound` | `false` | Play the Windows `Asterisk` sound when a card opens. |
 | `durationMs` | `0` | Auto-close after N ms; `0` keeps the card until you click it. |
@@ -103,7 +105,7 @@ The card is a borderless, always-on-top WPF window hosted by a short-lived `powe
 - **Fail-open.** If the foreground check or the Win32 helper fails to compile, the card still shows; a broken detector never eats a notification.
 - **Closing is never "answering".** Dismissing a card does not approve anything — you still answer in DSH. Cards are a reminder, not a remote control.
 
-Window title matching is intentionally substring-based: DSH in the desktop app titles its window `任务名 — DeepSeek Harness`, and the same title appears with a browser suffix when DSH runs in a tab, so both cases match `dshWindowTitleMarker`.
+Foreground detection is primarily **process based**, with the window title only as a fallback: every time you send a message (root agent enters `running`) the plugin records the foreground window's process name against that session, and the card compares `DeepSeek Harness.exe` first, then that session's client process (e.g. `Obsidian.exe`). A title match still suppresses the card when the process name cannot be read.
 
 ## How it works
 
@@ -113,7 +115,7 @@ The plugin listens to three Cordis events and never replaces DSH's own UI:
 | --- | --- |
 | `approval/request` (waterfall) | A tool needs your approval. Registered with `prepend` and always calls `next()`, so the built-in bridge still answers it. |
 | `tools/pre-execute` (waterfall) | `ask_user_question` → "question", `exit_plan_mode` → "plan review". Always calls `next()`, so the tool still runs. |
-| `agent/status` | `running → idle` for a root agent → "run finished". |
+| `agent/status` | `running → idle` for a root agent → "run finished"; the `running` edge also records the session's client attribution. |
 
 The first line of the card is the session title (`ctx.get('sessionTitle')`), falling back to the working-directory name, then to the first 8 characters of the session id.
 
@@ -128,7 +130,7 @@ The first line of the card is the session title (`ctx.get('sessionTitle')`), fal
 
 - **Windows only.** macOS/Linux fall back to "no popup" (logged once per spawn).
 - **Not actionable.** The card cannot approve or reject; it only tells you something is waiting.
-- **Title heuristics.** Both the foreground suppression and click-to-focus match the DSH window by title. If you rename the window title (custom shell, remote session), set `dshWindowTitleMarker` accordingly, or turn the feature off.
+- **Attribution is a heuristic.** The session's client is inferred from the foreground process at the moment you send a message; it is sampled once, on the root agent's `running` edge. Switching windows while the run is in progress does not change it, but messages forwarded from a browser (or sent while the foreground is something else) fall back to the DSH-only rule. `dshWindowTitleMarker` remains a title fallback.
 - **Not a notification centre.** No history, no badge, no per-type styling: that is deliberate, so the card stays a glanceable prompt.
 - **PowerShell startup.** Creating a card costs roughly the cold-start of `Add-Type`/WPF (a few hundred milliseconds); cards are serialized, so bursts queue instead of racing.
 

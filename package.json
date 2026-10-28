@@ -1,6 +1,6 @@
 {
   "name": "dsh-popup-cards",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "Topmost DSH-styled Windows cards for DeepSeek Harness approvals, questions, plan reviews and finished runs — click to jump back, or close with the × button.",
   "type": "module",
   "main": "./lib/index.mjs",

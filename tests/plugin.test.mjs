@@ -3,9 +3,14 @@ import test from 'node:test'
 
 import {
   DEFAULT_CONFIG,
+  DSH_PROCESS,
   KIND_LABELS,
+  apply,
+  buildProbeScript,
   buildScript,
+  clientProcessesOf,
   inject,
+  isClientProcess,
   name,
   shouldNotify,
   taskNameOf,
@@ -33,6 +38,8 @@ test('defaults keep the card quiet and non-intrusive', () => {
   assert.equal(DEFAULT_CONFIG.activateDSHOnClick, true)
   assert.equal(DEFAULT_CONFIG.autoCloseOnDSHFocus, true)
   assert.equal(DEFAULT_CONFIG.hintText, '点击回到 DSH')
+  assert.equal(DEFAULT_CONFIG.attributeByClient, true)
+  assert.deepEqual(DEFAULT_CONFIG.clientProcesses, [])
 })
 
 test('buildScript emits one self-contained PowerShell script', () => {
@@ -60,12 +67,127 @@ test('foreground gate, auto-close poll and click handler are emitted', () => {
   const script = buildScript('任务', KIND_LABELS.approval, DEFAULT_CONFIG)
   assert.match(script, /Add-Type -MemberDefinition[\s\S]*-Name DshPopupWin/)
   assert.match(script, /\[DshPopupNotify\.DshPopupWin\]::ForegroundTitle\(\)/)
-  assert.match(script, /skip: dsh foreground title=/)
+  assert.match(script, /\[DshPopupNotify\.DshPopupWin\]::ForegroundProcessName\(\)/)
+  assert.match(script, /skip: client foreground exe=/)
   assert.match(script, /DispatcherTimer/)
-  assert.match(script, /auto-close: dsh foreground title=/)
+  assert.match(script, /auto-close: client foreground exe=/)
   assert.match(script, /FindByTitle\('— DeepSeek Harness'\)/)
   assert.match(script, /Activate\(\$h\)/)
   assert.match(script, /click: close button/)
+})
+
+test('client process list is normalised for attribution', () => {
+  assert.deepEqual(clientProcessesOf('Obsidian.exe'), ['Obsidian.exe'])
+  assert.deepEqual(clientProcessesOf([' Obsidian.exe ', 'obsidian.exe', '', 3]), ['Obsidian.exe'])
+  assert.deepEqual(clientProcessesOf(undefined), [])
+  assert.equal(isClientProcess('Obsidian.exe', ['obsidian.exe']), true)
+  assert.equal(isClientProcess(DSH_PROCESS, []), true)
+  assert.equal(isClientProcess('chrome.exe', ['Obsidian.exe']), false)
+  assert.equal(isClientProcess('', ['Obsidian.exe']), false)
+})
+
+test('the card compares the foreground process, not just the title', () => {
+  const script = buildScript('任务', KIND_LABELS.approval, {
+    ...DEFAULT_CONFIG,
+    clientProcesses: ['Obsidian.exe'],
+    clientExe: 'Obsidian.exe',
+  })
+  assert.match(script, /\$clientExe = 'Obsidian\.exe'/)
+  assert.match(script, /\$dshExe = 'DeepSeek Harness\.exe'/)
+  assert.match(script, /if \(\$fgExe -eq \$dshExe/)
+  assert.match(script, /-eq \$clientExe/)
+  assert.match(script, /FindByProcessName\(\$clientExe\)/)
+
+  const noClient = buildScript('任务', KIND_LABELS.approval, DEFAULT_CONFIG)
+  assert.match(noClient, /\$clientExe = ''/)
+  assert.match(noClient, /FindByTitle\('— DeepSeek Harness'\)/)
+})
+
+test('foreground probe script reads the process name', () => {
+  const probe = buildProbeScript()
+  assert.match(probe, /GetForegroundWindow/)
+  assert.match(probe, /GetWindowThreadProcessId/)
+  assert.match(probe, /Get-Process -Id \$procId/)
+})
+
+test('a card carries the client that started the session', () => {
+  const handlers = {}
+  const shown = []
+  const ctx = {
+    on: (event, handler) => {
+      handlers[event] = handler
+    },
+    effect: (fn) => {
+      fn()
+    },
+    logger: { warn() {} },
+    get: () => undefined,
+  }
+  const child = { pid: 1, once() {} }
+  apply(ctx, { ...DEFAULT_CONFIG, clientProcesses: ['Obsidian.exe'] }, {
+    spawnDialog: (task, kind, config) => {
+      shown.push({ task, kind, config })
+      return child
+    },
+    foregroundProcessName: (callback) => callback('Obsidian.exe'),
+  })
+  const agent = { id: 'a1', session: { id: 's1', header: {} } }
+  handlers['agent/status']({ agent, status: 'running' })
+  handlers['approval/request']({ agent, toolName: 'pwsh' }, () => {})
+  assert.equal(shown.length, 1)
+  assert.equal(shown[0].config.clientExe, 'Obsidian.exe')
+})
+
+test('no attribution when the front app is not a client', () => {
+  const handlers = {}
+  const shown = []
+  const ctx = {
+    on: (event, handler) => {
+      handlers[event] = handler
+    },
+    effect: (fn) => {
+      fn()
+    },
+    logger: { warn() {} },
+    get: () => undefined,
+  }
+  apply(ctx, { ...DEFAULT_CONFIG, clientProcesses: ['Obsidian.exe'] }, {
+    spawnDialog: (task, kind, config) => {
+      shown.push(config)
+      return { pid: 1, once() {} }
+    },
+    foregroundProcessName: (callback) => callback('chrome.exe'),
+  })
+  const agent = { id: 'a1', session: { id: 's1', header: {} } }
+  handlers['agent/status']({ agent, status: 'running' })
+  handlers['approval/request']({ agent, toolName: 'pwsh' }, () => {})
+  assert.equal(shown.length, 1)
+  assert.equal(shown[0].clientExe, '')
+})
+
+test('sub-agents never overwrite the session attribution', () => {
+  const handlers = {}
+  const probes = []
+  const ctx = {
+    on: (event, handler) => {
+      handlers[event] = handler
+    },
+    effect: (fn) => {
+      fn()
+    },
+    logger: { warn() {} },
+    get: () => undefined,
+  }
+  apply(ctx, { ...DEFAULT_CONFIG, clientProcesses: ['Obsidian.exe'] }, {
+    spawnDialog: () => ({ pid: 1, once() {} }),
+    foregroundProcessName: (callback) => {
+      probes.push(1)
+      callback('Obsidian.exe')
+    },
+  })
+  const sub = { id: 'sub', session: { id: 's2', header: { delegationDepth: 1 } } }
+  handlers['agent/status']({ agent: sub, status: 'running' })
+  assert.equal(probes.length, 0)
 })
 
 test('switching behaviours off removes their machinery', () => {
