@@ -42,8 +42,10 @@ GitHub-hosted raster images (png/jpg/webp) — SVG and third-party hosts are
 rejected — so keep the PNG in this repository and leave the URL pointing at
 `main`.
 
-Both PNGs are quantised to ~130 KB each so the storefront detail page stays
-light; re-quantise if you replace them (`PIL: img.quantize(256)`).
+The PNGs are tightly cropped to the card itself (≈500×265 px, ~60 KB each) so
+the storefront detail page stays light and no third-party desktop content leaks
+into the screenshots. Re-crop and re-quantise if you replace them
+(`PIL: img.quantize(256)`).
 
 ## 2. Create and push the repository
 
