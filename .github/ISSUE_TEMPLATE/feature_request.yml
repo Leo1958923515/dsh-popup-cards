@@ -1,0 +1,35 @@
+name: Feature request
+description: Suggest a behaviour, option or improvement.
+title: '[feature] '
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before proposing a UI that can approve or reject from the card: the
+        plugin deliberately cannot answer for you. See SECURITY.md for why.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem are you trying to solve?
+      description: Describe the situation, not only the requested setting.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behaviour
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Configuration that already exists, other plugins, doing nothing.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checklist
+      options:
+        - label: This does not ask the card to approve or reject on my behalf.
+          required: true

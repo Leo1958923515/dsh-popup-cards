@@ -1,0 +1,67 @@
+{
+  "name": "dsh-popup-cards",
+  "version": "0.1.5",
+  "description": "Topmost DSH-styled Windows cards for DeepSeek Harness approvals, questions, plan reviews and finished runs — click to jump back, or close with the × button.",
+  "type": "module",
+  "main": "./lib/index.mjs",
+  "exports": {
+    ".": "./lib/index.mjs",
+    "./package.json": "./package.json",
+    "./locale/*": "./locale/*.json",
+    "./icon": "./icon.svg"
+  },
+  "files": [
+    "lib",
+    "cordis.patch.yml",
+    "locale/*.json",
+    "icon.svg",
+    "README.md",
+    "README.zh-CN.md",
+    "CHANGELOG.md",
+    "LICENSE",
+    "screenshots.json",
+    "assets/screenshots"
+  ],
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "dsh-bundle",
+    "deepseek-harness",
+    "deepseek",
+    "notifications",
+    "popup",
+    "desktop-notifications",
+    "windows",
+    "approval",
+    "plan-review",
+    "wpf"
+  ],
+  "author": "Leo <1958923515@qq.com> (https://github.com/Leo1958923515)",
+  "contributors": [
+    "yiumanlenong <https://github.com/yiumanlenong> (original author)"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Leo1958923515/dsh-popup-cards.git"
+  },
+  "homepage": "https://github.com/Leo1958923515/dsh-popup-cards#readme",
+  "bugs": {
+    "url": "https://github.com/Leo1958923515/dsh-popup-cards/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "test": "node --test tests/plugin.test.mjs tests/display-metadata.test.mjs",
+    "pack:check": "npm pack --dry-run"
+  },
+  "engines": {
+    "dsh": ">=0.2.1-rc.2 <0.3.0-0"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

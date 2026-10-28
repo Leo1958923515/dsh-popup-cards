@@ -1,0 +1,76 @@
+name: Bug report
+description: Something does not work — no card, wrong card, crash, no focus jump.
+title: '[bug] '
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report. Please do not include message contents, tokens or
+        personal paths — a card only needs the task name and the confirmation
+        type, so that is usually enough to describe a problem.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: A short description of the actual behaviour.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect instead?
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Install the plugin …
+        2. Ask the agent to run an escalated command …
+        3. …
+    validations:
+      required: true
+  - type: input
+    id: dsh
+    attributes:
+      label: DeepSeek Harness version
+      placeholder: 0.2.1-rc.3
+    validations:
+      required: true
+  - type: input
+    id: windows
+    attributes:
+      label: Windows version and display scaling
+      placeholder: Windows 11 24H2, 200% scaling, single monitor
+    validations:
+      required: true
+  - type: dropdown
+    id: which
+    attributes:
+      label: Which notifications are affected?
+      multiple: true
+      options:
+        - Approvals (权限确认)
+        - Questions / plan review (提问待答 / 计划确认)
+        - Run finished (任务完成)
+        - Self-test card (插件自检)
+        - All of them
+  - type: textarea
+    id: trace
+    attributes:
+      label: Diagnostic trace
+      description: |
+        Set `traceFile` in the plugin config, reproduce the problem, and attach
+        the last lines (remove personal paths first).
+      render: text
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checklist
+      options:
+        - label: I searched existing issues before opening this one.
+          required: true
+        - label: I am on Windows (the plugin does not render cards elsewhere).
+          required: true

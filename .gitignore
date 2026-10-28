@@ -1,0 +1,18 @@
+# Dependencies (this package has none at runtime, but local tooling may add some)
+node_modules/
+
+# Logs and diagnostics
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Build / test output
+dist/
+coverage/
+*.tgz

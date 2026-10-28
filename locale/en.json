@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Popup Notify",
+    "description": "DSH-styled topmost cards in the bottom-right corner when a tool needs approval, the model asks something, a plan is waiting, or a run finishes; click to jump back, close with ×, or let it close when you return."
+  }
+}

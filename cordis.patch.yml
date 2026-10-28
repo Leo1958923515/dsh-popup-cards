@@ -1,0 +1,3 @@
+- insert:
+    - id: popup-notify
+      name: 'dsh-popup-cards'
