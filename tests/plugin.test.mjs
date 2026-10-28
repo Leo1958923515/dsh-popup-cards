@@ -109,6 +109,9 @@ test('task name resolution falls back in order', () => {
   assert.equal(taskNameOf(broken, { header: { cwd: 'D:\\work\\proj' }, id: 'abcdef123456' }), 'proj')
   assert.equal(taskNameOf(broken, { id: 'abcdef123456' }), 'abcdef12')
   assert.equal(taskNameOf(broken, {}), 'DSH 任务')
+  // POSIX 与 Windows 路径都要能取到末段；只剩盘符时退回会话 id。
+  assert.equal(taskNameOf(broken, { header: { cwd: '/home/leo/proj' }, id: 'abcdef123456' }), 'proj')
+  assert.equal(taskNameOf(broken, { header: { cwd: 'C:\\' }, id: 'abcdef123456' }), 'abcdef12')
 })
 
 test('sub-agents stay quiet when requested', () => {
