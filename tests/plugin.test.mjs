@@ -110,7 +110,7 @@ test('foreground probe script reads the process name', () => {
   assert.match(probe, /Get-Process -Id \$procId/)
 })
 
-test('a card carries the client that started the session', () => {
+test('a card carries the client that started the session', { skip: process.platform === 'win32' ? false : 'Windows-only card spawn' }, () => {
   const handlers = {}
   const shown = []
   const ctx = {
@@ -138,7 +138,7 @@ test('a card carries the client that started the session', () => {
   assert.equal(shown[0].config.clientExe, 'Obsidian.exe')
 })
 
-test('no attribution when the front app is not a client', () => {
+test('no attribution when the front app is not a client', { skip: process.platform === 'win32' ? false : 'Windows-only card spawn' }, () => {
   const handlers = {}
   const shown = []
   const ctx = {
