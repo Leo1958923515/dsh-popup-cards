@@ -56,7 +56,7 @@ keeps the upstream MIT notice in `LICENSE`, not a GitHub fork.
 ```sh
 git init
 git add .
-git commit -m "dsh-popup-cards 0.1.5: DSH-styled cards with click-to-focus, auto-close and × close"
+git commit -m "dsh-popup-cards 0.1.6: client attribution for DSH-styled cards"
 git branch -M main
 git remote add origin https://github.com/Leo1958923515/dsh-popup-cards.git
 git push -u origin main
@@ -74,8 +74,8 @@ Then, on GitHub:
 ## 3. Tag the release
 
 ```sh
-git tag -a v0.1.5 -m "dsh-popup-cards 0.1.5"
-git push origin v0.1.5
+git tag -a v0.1.6 -m "dsh-popup-cards 0.1.6"
+git push origin v0.1.6
 ```
 
 Optionally attach a prebuilt tarball (`npm pack`) to the GitHub Release and add

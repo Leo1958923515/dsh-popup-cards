@@ -17,7 +17,7 @@ When a tool asks for permission, the model asks a question, a plan waits for rev
 
 DeepSeek Harness already shows approvals and questions in its own window. That is useless when you are editing code in another app, reading a browser tab, or waiting for a long build. This plugin brings that moment to your desktop with a card that survives window switching, and lets you jump straight back:
 
-- **Click the card** → the DSH window comes to the front, the card closes.
+- **Click the card** → the app that started the session comes to the front (DSH by default), the card closes.
 - **Click the × in the top-right corner** → the card closes, and DSH stays where it is.
 - **Switch back to DSH yourself** → the card notices and closes itself.
 - **Already looking at DSH** → nothing pops up (the in-app prompt is enough).
@@ -130,7 +130,7 @@ The first line of the card is the session title (`ctx.get('sessionTitle')`), fal
 
 - **Windows only.** macOS/Linux fall back to "no popup" (logged once per spawn).
 - **Not actionable.** The card cannot approve or reject; it only tells you something is waiting.
-- **Attribution is a heuristic.** The session's client is inferred from the foreground process at the moment you send a message; it is sampled once, on the root agent's `running` edge. Switching windows while the run is in progress does not change it, but messages forwarded from a browser (or sent while the foreground is something else) fall back to the DSH-only rule. `dshWindowTitleMarker` remains a title fallback.
+- **Attribution is a heuristic.** The session's client is inferred from the foreground process at the moment you send a message; it is sampled once, on the root agent's `running` edge. Switching windows while the run is in progress does not change it, but messages forwarded from a browser (or sent while the foreground is something else) fall back to the DSH-only rule — such an unattributed card stays quiet while the DSH window is in front, even if the run was started elsewhere. `dshWindowTitleMarker` remains a title fallback.
 - **Not a notification centre.** No history, no badge, no per-type styling: that is deliberate, so the card stays a glanceable prompt.
 - **PowerShell startup.** Creating a card costs roughly the cold-start of `Add-Type`/WPF (a few hundred milliseconds); cards are serialized, so bursts queue instead of racing.
 

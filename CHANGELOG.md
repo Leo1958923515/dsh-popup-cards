@@ -16,6 +16,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Foreground diagnostics text: `skip: client foreground exe=… title=…` and `auto-close: client foreground exe=… title=…` (was `dsh foreground title=…`).
 - `dshWindowTitleMarker` is now a fallback only; process matching takes precedence.
 
+### Known limitations
+
+- Attribution is sampled once, when the root agent starts; a session whose client could not be determined falls back to the DSH-only rule, so its card stays quiet while the DSH window is in front even if the run was started elsewhere.
+
 ## [0.1.5] - 2026-10-28
 
 First release of `dsh-popup-cards`, based on
